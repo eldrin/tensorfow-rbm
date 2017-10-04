@@ -4,9 +4,11 @@ from .util import sample_bernoulli, sample_gaussian
 
 
 class GBRBM(RBM):
-    def __init__(self, n_visible, n_hidden, sample_visible=False, sigma=1, **kwargs):
+    def __init__(self, n_visible, n_hidden, sample_visible=False, sigma=1, lamda=0.1, sparsity=0.99, **kwargs):
         self.sample_visible = sample_visible
         self.sigma = sigma
+        self.lamda = lamda
+        self.rho = 1. - sparsity # rho is the target of average activation (sparsity 1 is most sparse case)
 
         RBM.__init__(self, n_visible, n_hidden, **kwargs)
 
@@ -22,13 +24,22 @@ class GBRBM(RBM):
         positive_grad = tf.matmul(tf.transpose(self.x), hidden_p)
         negative_grad = tf.matmul(tf.transpose(visible_recon_p), hidden_recon_p)
 
+        # sparsity
+        # sparsity_grad_base = self.lamda * (self.rho - tf.reduce_mean(hidden_p)) * hidden_p * (1. - hidden_p)
+        sparsity_grad_base = \
+        self.lamda * (self.rho - tf.reduce_sum(tf.reduce_mean(hidden_p, 0))) * hidden_p * (1. - hidden_p)
+        sparsity_grad_w = tf.matmul(tf.transpose(self.x), sparsity_grad_base)
+        sparsity_grad_hidden_bias = sparsity_grad_base
+
         def f(x_old, x_new):
             return self.momentum * x_old +\
                    self.learning_rate * x_new * (1 - self.momentum) / tf.to_float(tf.shape(x_new)[0])
 
-        delta_w_new = f(self.delta_w, positive_grad - negative_grad)
+        delta_w_new = f(self.delta_w, positive_grad - negative_grad + sparsity_grad_w)
         delta_visible_bias_new = f(self.delta_visible_bias, tf.reduce_mean(self.x - visible_recon_p, 0))
-        delta_hidden_bias_new = f(self.delta_hidden_bias, tf.reduce_mean(hidden_p - hidden_recon_p, 0))
+        delta_hidden_bias_new = f(
+            self.delta_hidden_bias,
+            tf.reduce_mean(hidden_p - hidden_recon_p + sparsity_grad_hidden_bias, 0))
 
         update_delta_w = self.delta_w.assign(delta_w_new)
         update_delta_visible_bias = self.delta_visible_bias.assign(delta_visible_bias_new)
