@@ -27,7 +27,7 @@ class GBRBM(RBM):
         # sparsity
         # sparsity_grad_base = self.lamda * (self.rho - tf.reduce_mean(hidden_p)) * hidden_p * (1. - hidden_p)
         sparsity_grad_base = \
-        self.lamda * (self.rho - tf.reduce_sum(tf.reduce_mean(hidden_p, 0))) * hidden_p * (1. - hidden_p)
+        self.lamda * (self.rho - tf.reduce_mean(hidden_p, 0)) * hidden_p * (1. - hidden_p)
         sparsity_grad_w = tf.matmul(tf.transpose(self.x), sparsity_grad_base)
         sparsity_grad_hidden_bias = sparsity_grad_base
 
@@ -55,3 +55,7 @@ class GBRBM(RBM):
         self.compute_hidden = tf.nn.sigmoid(tf.matmul(self.x, self.w) + self.hidden_bias)
         self.compute_visible = tf.matmul(self.compute_hidden, tf.transpose(self.w)) + self.visible_bias
         self.compute_visible_from_hidden = tf.matmul(self.y, tf.transpose(self.w)) + self.visible_bias
+
+        # override cost calc
+        self.compute_err = tf.reduce_mean(tf.square(self.x - self.compute_visible))
+        self.compute_err += self.lamda * tf.square(self.rho - tf.reduce_mean(hidden_p))
