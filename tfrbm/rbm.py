@@ -74,7 +74,7 @@ class RBM:
 
         self.compute_err = self.compute_err + self.lamda * tf.reduce_sum((self.rho -
                                                             tf.reduce_mean(self.compute_hidden,
-                                                                          0)))**2
+                                                                          0))**2)
 
         init = tf.global_variables_initializer()
         self.sess = tf.Session()
