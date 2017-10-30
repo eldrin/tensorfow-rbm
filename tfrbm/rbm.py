@@ -33,6 +33,7 @@ class RBM:
             self._tqdm = tqdm
 
         self.rho = 1. - sparsity
+        self.lamda = lamda
         self.n_visible = n_visible
         self.n_hidden = n_hidden
         self.learning_rate = learning_rate
