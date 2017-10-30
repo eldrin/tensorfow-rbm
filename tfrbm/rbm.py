@@ -13,6 +13,8 @@ class RBM:
                  learning_rate=0.01,
                  momentum=0.95,
                  xavier_const=1.0,
+                 lamda=0.1,
+                 sparsity=0.99,
                  err_function='mse',
                  use_tqdm=False,
                  # DEPRECATED:
@@ -30,6 +32,7 @@ class RBM:
             from tqdm import tqdm
             self._tqdm = tqdm
 
+        self.rho = 1. - sparsity
         self.n_visible = n_visible
         self.n_hidden = n_hidden
         self.learning_rate = learning_rate
@@ -67,6 +70,10 @@ class RBM:
             self.compute_err = tf.acos(cos_val) / tf.constant(np.pi)
         else:
             self.compute_err = tf.reduce_mean(tf.square(self.x - self.compute_visible))
+
+        self.compute_err = self.compute_err + self.lamda * tf.reduce_sum((self.rho -
+                                                            tf.reduce_mean(self.compute_hidden,
+                                                                          0)))**2
 
         init = tf.global_variables_initializer()
         self.sess = tf.Session()

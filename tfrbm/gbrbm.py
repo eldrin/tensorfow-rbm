@@ -7,10 +7,8 @@ class GBRBM(RBM):
     def __init__(self, n_visible, n_hidden, sample_visible=False, sigma=1, lamda=0.1, sparsity=0.99, **kwargs):
         self.sample_visible = sample_visible
         self.sigma = sigma
-        self.lamda = lamda
-        self.rho = 1. - sparsity # rho is the target of average activation (sparsity 1 is most sparse case)
-
-        RBM.__init__(self, n_visible, n_hidden, **kwargs)
+        RBM.__init__(self, n_visible, n_hidden, lamda=lamda, sparsity=sparsity,
+                     **kwargs)
 
     def _initialize_vars(self):
         hidden_p = tf.nn.sigmoid(tf.matmul(self.x, self.w) + self.hidden_bias)
