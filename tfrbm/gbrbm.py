@@ -26,8 +26,8 @@ class GBRBM(RBM):
         lamda_ = self.lamda / hidden_p.get_shape()[0]
         # sparsity_grad_base = self.lamda * (self.rho - tf.reduce_mean(hidden_p)) * hidden_p * (1. - hidden_p)
         sparsity_grad_base = (self.rho - tf.reduce_mean(hidden_p, 0)) * hidden_p * (1. - hidden_p)
-        sparsity_grad_w = tf.matmul(tf.transpose(self.x), sparsity_grad_base)
-        sparsity_grad_hidden_bias = sparsity_grad_base
+        sparsity_grad_w = lamda_ * tf.matmul(tf.transpose(self.x), sparsity_grad_base)
+        sparsity_grad_hidden_bias = lamda_ * sparsity_grad_base
 
         def f(x_old, x_new):
             return self.momentum * x_old +\
